@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenClaw SaaS Factory</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+:root{
+  --bg:#080c10;--surface:#0f1419;--surface2:#161d26;--surface3:#1e2833;
+  --border:#1f2d3d;--border2:#2a3f54;
+  --accent:#00d4ff;--accent-dim:rgba(0,212,255,0.08);
+  --green:#00ff9d;--green-dim:rgba(0,255,157,0.08);
+  --orange:#ff7b35;--orange-dim:rgba(255,123,53,0.08);
+  --purple:#a855f7;--purple-dim:rgba(168,85,247,0.08);
+  --red:#ff4757;--red-dim:rgba(255,71,87,0.08);
+  --yellow:#ffd32a;--yellow-dim:rgba(255,211,42,0.08);
+  --text:#e2eaf4;--muted:#5a7a96;--muted2:#3d5470;
+  --mono:'Space Mono',monospace;
+  --sans:'DM Sans',sans-serif;
+  --title:'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;display:flex}
+
+/* SCAN LINE */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);pointer-events:none;z-index:9999}
+
+/* SIDEBAR */
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.logo{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.logo-text{font-family:var(--title);font-size:13px;font-weight:800;line-height:1.1}
+.logo-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px}
+.nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav::-webkit-scrollbar{width:0}
+.nav-group{padding:14px 14px 4px;font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:2px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;cursor:pointer;color:var(--muted);font-size:12px;transition:all .15s;border-left:2px solid transparent;position:relative}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.nav-item.on{color:var(--accent);border-left-color:var(--accent);background:var(--accent-dim)}
+.nav-icon{width:14px;text-align:center;flex-shrink:0;font-size:12px}
+.nav-badge{margin-left:auto;font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:3px;font-weight:700}
+.nb-green{background:var(--green-dim);color:var(--green)}
+.nb-red{background:var(--red-dim);color:var(--red)}
+.nb-yellow{background:var(--yellow-dim);color:var(--yellow)}
+.sysbar{padding:12px 14px;border-top:1px solid var(--border);font-family:var(--mono);font-size:9px}
+.pulse{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:5px;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+.topbar-title{font-family:var(--title);font-size:15px;font-weight:700;flex:1}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.content{flex:1;overflow-y:auto;padding:20px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-family:var(--title);font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border2)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-green{background:var(--green);color:#000}
+
+/* KILL SWITCH */
+.ks{display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border2);padding:5px 12px;border-radius:6px;cursor:pointer;font-family:var(--mono);font-size:9px;color:var(--muted);transition:all .2s}
+.ks:hover{border-color:var(--red);color:var(--red)}
+.ks.on{border-color:var(--green);color:var(--green)}
+.ks-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.card-title{font-family:var(--title);font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.card-sub{font-family:var(--mono);font-size:9px;color:var(--muted)}
+
+/* STATS */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;top:0;left:0;right:0;height:1px}
+.stat.c-accent::after{background:var(--accent)}
+.stat.c-green::after{background:var(--green)}
+.stat.c-orange::after{background:var(--orange)}
+.stat.c-purple::after{background:var(--purple)}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.stat-val{font-family:var(--title);font-size:24px;font-weight:800;line-height:1}
+.stat-hint{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:5px}
+
+/* GRID LAYOUTS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* FORM */
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.label{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.input,.select,.textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-family:var(--sans);font-size:13px;padding:9px 12px;outline:none;width:100%;transition:border-color .2s}
+.input:focus,.select:focus,.textarea:focus{border-color:var(--accent)}
+.textarea{resize:vertical;min-height:70px;font-family:var(--mono);font-size:11px;line-height:1.6}
+.select option{background:var(--surface2)}
+.row{display:flex;gap:10px}
+.row .field{flex:1}
+
+/* API KEY BANNER */
+.api-banner{background:var(--yellow-dim);border:1px solid rgba(255,211,42,.3);border-radius:8px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;font-size:12px}
+.api-banner.ok{background:var(--green-dim);border-color:rgba(0,255,157,.3)}
+
+/* PIPELINE */
+.pipe{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px}
+.pipe-step{flex:1;padding:10px 8px;border-right:1px solid var(--border);background:var(--surface);text-align:center;position:relative;transition:background .2s;cursor:default}
+.pipe-step:last-child{border-right:none}
+.pipe-step.done{background:rgba(0,255,157,.06)}
+.pipe-step.running{background:rgba(0,212,255,.08)}
+.pipe-step.error{background:rgba(255,71,87,.06)}
+.pipe-step.waiting{opacity:.5}
+.pipe-num{font-family:var(--mono);font-size:8px;color:var(--muted);margin-bottom:3px}
+.pipe-name{font-family:var(--title);font-size:10px;font-weight:700}
+.pipe-st{font-family:var(--mono);font-size:8px;margin-top:3px;color:var(--muted)}
+.pipe-step.done .pipe-st{color:var(--green)}
+.pipe-step.running .pipe-st{color:var(--accent)}
+.pipe-step.error .pipe-st{color:var(--red)}
+
+/* PROGRESS */
+.prog-bar{height:2px;background:var(--border);border-radius:1px;overflow:hidden}
+.prog-fill{height:100%;background:var(--accent);border-radius:1px;transition:width .4s ease}
+
+/* OUTPUT TERMINAL */
+.terminal{background:#020407;border:1px solid var(--border);border-radius:8px;padding:14px;font-family:var(--mono);font-size:11px;line-height:1.7;max-height:420px;overflow-y:auto;margin-top:10px}
+.terminal::-webkit-scrollbar{width:3px}
+.terminal::-webkit-scrollbar-thumb{background:var(--border2)}
+.t-prompt{color:var(--accent)}
+.t-ok{color:var(--green)}
+.t-err{color:var(--red)}
+.t-warn{color:var(--yellow)}
+.t-info{color:var(--purple)}
+.t-dim{color:var(--muted)}
+.t-data{color:#a8d8ff}
+.t-white{color:var(--text)}
+.cursor{display:inline-block;width:7px;height:12px;background:var(--accent);animation:blink 1s step-end infinite;vertical-align:middle;margin-left:2px}
+
+/* SKILL CARDS */
+.skill-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.sk{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;cursor:pointer;transition:all .2s}
+.sk:hover{border-color:var(--border2);transform:translateY(-1px)}
+.sk.active{border-color:var(--accent);background:var(--accent-dim)}
+.sk-layer{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.sk-name{font-family:var(--title);font-size:11px;font-weight:700;margin-bottom:3px}
+.sk-desc{font-size:10px;color:var(--muted);line-height:1.4}
+.sk-tag{display:inline-block;margin-top:5px;font-family:var(--mono);font-size:8px;padding:2px 5px;border-radius:3px}
+.tag-g{background:var(--green-dim);color:var(--green)}
+.tag-b{background:var(--accent-dim);color:var(--accent)}
+.tag-p{background:var(--purple-dim);color:var(--purple)}
+.tag-o{background:var(--orange-dim);color:var(--orange)}
+
+/* LOGS */
+.log-feed{font-family:var(--mono);font-size:10px;line-height:1.8}
+.log-row{display:flex;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);align-items:flex-start}
+.log-t{color:var(--muted2);white-space:nowrap;flex-shrink:0}
+.log-badge{padding:1px 5px;border-radius:3px;font-size:8px;font-weight:700;flex-shrink:0;margin-top:1px}
+.lb-ok{background:var(--green-dim);color:var(--green)}
+.lb-err{background:var(--red-dim);color:var(--red)}
+.lb-warn{background:var(--yellow-dim);color:var(--yellow)}
+.lb-info{background:var(--purple-dim);color:var(--purple)}
+.lb-cache{background:var(--accent-dim);color:var(--accent)}
+.log-msg{flex:1;color:var(--text)}
+
+/* APPROVAL */
+.appr{background:var(--yellow-dim);border:1px solid rgba(255,211,42,.25);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start}
+.appr-body{flex:1}
+.appr-title{font-family:var(--title);font-size:13px;font-weight:700;margin-bottom:4px}
+.appr-meta{font-family:var(--mono);font-size:9px;color:var(--muted);line-height:1.7}
+.appr-acts{display:flex;gap:6px;flex-shrink:0}
+
+/* STATUS PILLS */
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-family:var(--mono);font-size:9px;font-weight:700}
+.pill-build{background:var(--accent-dim);color:var(--accent)}
+.pill-live{background:var(--green-dim);color:var(--green)}
+.pill-err{background:var(--red-dim);color:var(--red)}
+.pill-queue{background:var(--yellow-dim);color:var(--yellow)}
+
+/* TABLE */
+table.main-tbl{width:100%;border-collapse:collapse}
+table.main-tbl th{font-family:var(--mono);font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+table.main-tbl td{padding:10px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;font-size:12px}
+table.main-tbl tr:hover td{background:rgba(255,255,255,.02)}
+
+/* CONTENT QUEUE */
+.cq-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start}
+.cq-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.cq-body{flex:1}
+.cq-platform{font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:3px}
+.cq-title{font-size:12px;font-weight:500;margin-bottom:3px}
+.cq-stats{font-family:var(--mono);font-size:9px;color:var(--muted)}
+.cq-acts{display:flex;gap:5px;flex-shrink:0;align-items:flex-start}
+
+/* COST METER */
+.cost-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-family:var(--mono);font-size:10px}
+.cost-label{color:var(--muted)}
+.cost-val{font-weight:700}
+.cost-val.ok{color:var(--green)}
+.cost-val.warn{color:var(--yellow)}
+.cost-val.bad{color:var(--red)}
+
+/* TOGGLE */
+.toggle{position:relative;display:inline-block;width:32px;height:17px}
+.toggle input{opacity:0;width:0;height:0}
+.tslider{position:absolute;inset:0;background:var(--border2);border-radius:17px;cursor:pointer;transition:.3s}
+.tslider::before{content:'';position:absolute;width:11px;height:11px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked+.tslider{background:var(--accent)}
+.toggle input:checked+.tslider::before{transform:translateX(15px)}
+
+/* OUTPUT JSON viewer */
+.json-out{background:#020407;border:1px solid var(--border);border-radius:8px;padding:12px;font-family:var(--mono);font-size:10px;line-height:1.7;max-height:300px;overflow-y:auto;margin-top:8px;white-space:pre-wrap;word-break:break-all}
+.json-key{color:#a8d8ff}
+.json-str{color:#c3e88d}
+.json-num{color:#f78c6c}
+.json-bool{color:var(--purple)}
+.json-null{color:var(--muted)}
+
+/* FLOW */
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 0}
+.fn{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-family:var(--mono);font-size:9px;color:var(--muted);white-space:nowrap;transition:all .2s}
+.fn.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.fn.done{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.fa{color:var(--muted2);font-size:10px}
+
+/* MODAL */
+.modal-wrap{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-wrap.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:22px;width:550px;max-height:80vh;overflow-y:auto;animation:slideUp .2s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-family:var(--title);font-size:16px;font-weight:800;margin-bottom:4px}
+.modal-sub{color:var(--muted);font-size:12px;margin-bottom:18px}
+
+/* CHART BARS */
+.bars{display:flex;align-items:flex-end;gap:3px;height:70px}
+.bar-item{flex:1;background:rgba(0,212,255,.15);border-radius:2px 2px 0 0;transition:all .3s;cursor:pointer;position:relative}
+.bar-item:hover{background:rgba(0,212,255,.4)}
+.bar-item.hi{background:rgba(0,212,255,.5)}
+
+/* SCROLLBAR global */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ANIM */
+@keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.page{animation:fadeSlide .18s ease}
+.spin{animation:rotate 1s linear infinite}
+@keyframes rotate{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">🏭</div>
+    <div>
+      <div class="logo-text">OpenClaw</div>
+      <div class="logo-sub">SAAS FACTORY v2</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-group">Factory</div>
+    <div class="nav-item on" onclick="go('overview')"><span class="nav-icon">◈</span>Overview</div>
+    <div class="nav-item" onclick="go('build')"><span class="nav-icon">⚡</span>Build SaaS<span class="nav-badge nb-green">GO</span></div>
+    <div class="nav-item" onclick="go('projects')"><span class="nav-icon">▣</span>Projects<span class="nav-badge nb-yellow" id="proj-ct">3</span></div>
+    <div class="nav-item" onclick="go('approvals')"><span class="nav-icon">◎</span>Approvals<span class="nav-badge nb-red" id="appr-ct">2</span></div>
+    <div class="nav-group">Intelligence</div>
+    <div class="nav-item" onclick="go('skills')"><span class="nav-icon">◉</span>Skills (33)</div>
+    <div class="nav-item" onclick="go('skills')"><span class="nav-icon">⟳</span>Workflows</div>
+    <div class="nav-group">Growth</div>
+    <div class="nav-item" onclick="go('growth')"><span class="nav-icon">↑</span>Growth Engine</div>
+    <div class="nav-item" onclick="go('content')"><span class="nav-icon">▶</span>Content Queue</div>
+    <div class="nav-group">Ops</div>
+    <div class="nav-item" onclick="go('analytics')"><span class="nav-icon">∿</span>Analytics</div>
+    <div class="nav-item" onclick="go('costs')"><span class="nav-icon">$</span>Cost Guard</div>
+    <div class="nav-item" onclick="go('logs')"><span class="nav-icon">≡</span>Logs</div>
+    <div class="nav-item" onclick="go('settings')"><span class="nav-icon">◧</span>Settings</div>
+  </nav>
+  <div class="sysbar">
+    <div style="margin-bottom:4px"><span class="pulse"></span><span id="sys-status" style="color:var(--green)">SYSTEM ONLINE</span></div>
+    <div style="color:var(--muted)">Tokens: <span id="token-count">0</span></div>
+    <div style="color:var(--muted)">Cost: <span id="cost-total">$0.000</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Factory Overview</div>
+    <div class="topbar-actions">
+      <div class="ks on" id="ks-btn" onclick="toggleKS()">
+        <div class="ks-dot"></div>
+        <span id="ks-txt">LIVE</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="go('build')">+ New SaaS</button>
+    </div>
+  </div>
+
+  <div class="content" id="content-area">
+
+    <!-- ======== OVERVIEW ======== -->
+    <div id="pg-overview" class="page">
+      <div class="stat-row">
+        <div class="stat c-green"><div class="stat-label">Built</div><div class="stat-val" style="color:var(--green)" id="ov-built">0</div><div class="stat-hint">SaaS products created</div></div>
+        <div class="stat c-accent"><div class="stat-label">Live</div><div class="stat-val" style="color:var(--accent)" id="ov-live">0</div><div class="stat-hint">Deployed & running</div></div>
+        <div class="stat c-orange"><div class="stat-label">Users</div><div class="stat-val" style="color:var(--orange)" id="ov-users">0</div><div class="stat-hint">Across all products</div></div>
+        <div class="stat c-purple"><div class="stat-label">Revenue</div><div class="stat-val" style="color:var(--purple)" id="ov-rev">₹0</div><div class="stat-hint">Monthly recurring</div></div>
+      </div>
+
+      <!-- Active Build -->
+      <div class="card" id="active-build-card" style="display:none">
+        <div class="card-title">Active Pipeline<span class="card-sub" id="active-build-name"></span></div>
+        <div class="pipe" id="pipe-display"></div>
+        <div class="prog-bar" style="margin-bottom:6px"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--muted)">
+          <span id="prog-step">Ready</span><span id="prog-eta"></span>
+        </div>
+      </div>
+
+      <!-- Live terminal -->
+      <div class="card">
+        <div class="card-title">Live Log <span class="card-sub" id="live-log-count">0 entries</span></div>
+        <div class="log-feed" id="live-log" style="max-height:180px;overflow-y:auto"></div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">Pending Approvals</div>
+          <div id="ov-approvals-mini"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cost Guard <span class="card-sub" id="cost-pct-lbl">$0 / $50 daily</span></div>
+          <div id="cost-meters"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== BUILD ======== -->
+    <div id="pg-build" class="page" style="display:none">
+      <div id="api-banner" class="api-banner">
+        <span style="font-size:16px">⚠</span>
+        <div>
+          <strong>OpenRouter API Key required</strong> — go to Settings to enter your key.
+          <span style="color:var(--yellow);cursor:pointer;text-decoration:underline" onclick="go('settings')"> Configure →</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">🏭 Launch Factory Run</div>
+        <div class="row">
+          <div class="field"><div class="label">SaaS Idea *</div><input class="input" id="b-idea" placeholder="e.g. AI feedback analyzer for product teams"></div>
+          <div class="field" style="max-width:170px"><div class="label">Audience</div><input class="input" id="b-audience" placeholder="e.g. SaaS founders"></div>
+        </div>
+        <div class="field"><div class="label">Core Problem</div><input class="input" id="b-problem" placeholder="e.g. manually reading thousands of reviews wastes hours every week"></div>
+        <div class="row" style="margin-top:4px;align-items:center;flex-wrap:wrap;gap:16px">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px">
+            <label class="toggle"><input type="checkbox" id="t-dry"><span class="tslider"></span></label>Dry Run Only
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px">
+            <label class="toggle"><input type="checkbox" checked id="t-approval"><span class="tslider"></span></label>Human Approval at Deploy
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px">
+            <label class="toggle"><input type="checkbox" checked id="t-growth"><span class="tslider"></span></label>Auto Growth Engine
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px">
+            <label class="toggle"><input type="checkbox" checked id="t-stream"><span class="tslider"></span></label>Stream Output
+          </label>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px">
+          <button class="btn btn-primary" id="launch-btn" onclick="launchFactory()">⚡ Launch Factory</button>
+          <button class="btn btn-ghost" onclick="runDryRun()">🔍 Dry Run</button>
+          <button class="btn btn-ghost" id="stop-btn" style="display:none;color:var(--red);border-color:var(--red)" onclick="stopRun()">■ Stop</button>
+        </div>
+      </div>
+
+      <!-- Execution Pipeline Display -->
+      <div class="card" id="exec-card" style="display:none">
+        <div class="card-title">Execution Pipeline <span class="card-sub" id="exec-phase">idle</span></div>
+        <div class="pipe" id="exec-pipe"></div>
+        <div class="prog-bar" style="margin:8px 0"><div class="prog-fill" id="exec-prog" style="width:0%"></div></div>
+
+        <!-- STREAMING TERMINAL -->
+        <div class="terminal" id="exec-terminal">
+          <span class="t-dim">// Factory ready. Launch a run to begin.</span>
+        </div>
+
+        <!-- RESULT OUTPUT -->
+        <div id="result-section" style="display:none;margin-top:12px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:1px">SKILL OUTPUT → JSON</div>
+          <div class="json-out" id="json-output"></div>
+        </div>
+
+        <!-- APPROVAL GATE -->
+        <div id="approval-gate" style="display:none;margin-top:12px;background:var(--yellow-dim);border:1px solid rgba(255,211,42,.3);border-radius:8px;padding:14px">
+          <div style="font-family:var(--title);font-size:13px;font-weight:700;margin-bottom:4px">⚠ Approval Required: Deploy to Production</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:10px">Review the build output above before approving. This will trigger real deployment.</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-green btn-sm" onclick="approveAndDeploy()">✓ Approve & Deploy</button>
+            <button class="btn btn-ghost btn-sm" onclick="rejectDeploy()">✗ Reject</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Flow preview -->
+      <div class="card">
+        <div class="card-title">Factory Pipeline <span class="card-sub">9 layers • 33 skills • OpenRouter powered</span></div>
+        <div class="flow">
+          <div class="fn active">Idea</div><div class="fa">→</div>
+          <div class="fn">Validate</div><div class="fa">→</div>
+          <div class="fn">Research</div><div class="fa">→</div>
+          <div class="fn">Problem</div><div class="fa">→</div>
+          <div class="fn">Features</div><div class="fa">→</div>
+          <div class="fn">Architect</div><div class="fa">→</div>
+          <div class="fn">Build</div><div class="fa">→</div>
+          <div class="fn">Validate</div><div class="fa">→</div>
+          <div class="fn">Deploy</div><div class="fa">→</div>
+          <div class="fn">Grow</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:6px">
+          Model: <span style="color:var(--accent)" id="model-lbl">deepseek/deepseek-chat</span> via OpenRouter &nbsp;|&nbsp; Est. cost/run: $0.01–$0.08
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== PROJECTS ======== -->
+    <div id="pg-projects" class="page" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-family:var(--title);font-size:18px;font-weight:800">Projects</div>
+          <div style="color:var(--muted);font-size:11px">All SaaS products built by your factory</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="go('build')">+ New SaaS</button>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <table class="main-tbl">
+          <thead><tr>
+            <th>Project</th><th>Status</th><th>Phase</th><th>Users</th><th>Cost</th><th>Created</th><th></th>
+          </tr></thead>
+          <tbody id="projects-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======== APPROVALS ======== -->
+    <div id="pg-approvals" class="page" style="display:none">
+      <div style="font-family:var(--title);font-size:18px;font-weight:800;margin-bottom:4px">Approval Queue</div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:14px">Human checkpoints — review before factory proceeds</div>
+      <div id="approvals-list"></div>
+    </div>
+
+    <!-- ======== SKILLS ======== -->
+    <div id="pg-skills" class="page" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-family:var(--title);font-size:18px;font-weight:800">Skill Library</div>
+          <div style="color:var(--muted);font-size:11px">33 production skills • all OpenRouter powered</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="skill-filters">
+          <button class="btn btn-ghost btn-sm on-filter" onclick="filterSkills('all')">All</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterSkills('validation')">Validation</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterSkills('product')">Product</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterSkills('build')">Build</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterSkills('growth')">Growth</button>
+          <button class="btn btn-ghost btn-sm" onclick="filterSkills('analytics')">Analytics</button>
+        </div>
+      </div>
+      <div class="skill-grid" id="skill-grid"></div>
+    </div>
+
+    <!-- ======== GROWTH ======== -->
+    <div id="pg-growth" class="page" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-family:var(--title);font-size:18px;font-weight:800">Growth Engine</div>
+          <div style="color:var(--muted);font-size:11px">Mine problems → generate content → post → analyze → loop</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="runGrowthCycle()">▶ Run Cycle</button>
+      </div>
+
+      <div class="card" id="growth-card">
+        <div class="card-title">Run Content Generation <span class="card-sub">powered by OpenRouter</span></div>
+        <div class="row">
+          <div class="field">
+            <div class="label">SaaS Name</div>
+            <input class="input" id="g-saas" placeholder="e.g. ResumeAI">
+          </div>
+          <div class="field">
+            <div class="label">Target Audience</div>
+            <input class="input" id="g-audience" placeholder="e.g. job seekers">
+          </div>
+          <div class="field">
+            <div class="label">Main Problem</div>
+            <input class="input" id="g-problem" placeholder="e.g. getting rejected by ATS">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button class="btn btn-primary btn-sm" onclick="runGrowthAI()">⚡ Generate Content</button>
+        </div>
+        <div class="terminal" id="growth-terminal" style="display:none;margin-top:10px;max-height:280px"></div>
+        <div id="growth-scripts" style="margin-top:10px"></div>
+      </div>
+
+      <div class="g3">
+        <div class="card">
+          <div class="card-title">Rate Limiter</div>
+          <div id="rate-meters"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Problem Miner</div>
+          <div id="mined-list" style="font-size:11px;color:var(--muted)">Run growth cycle to mine problems.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Post Queue</div>
+          <div id="post-queue" style="font-size:11px;color:var(--muted)">No posts queued.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== CONTENT ======== -->
+    <div id="pg-content" class="page" style="display:none">
+      <div style="font-family:var(--title);font-size:18px;font-weight:800;margin-bottom:4px">Content Queue</div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:14px">Generated scripts awaiting approval</div>
+      <div id="content-list"></div>
+    </div>
+
+    <!-- ======== ANALYTICS ======== -->
+    <div id="pg-analytics" class="page" style="display:none">
+      <div style="font-family:var(--title);font-size:18px;font-weight:800;margin-bottom:14px">Analytics</div>
+      <div class="stat-row">
+        <div class="stat c-accent"><div class="stat-label">Views</div><div class="stat-val" style="color:var(--accent)" id="an-views">0</div><div class="stat-hint">Content total</div></div>
+        <div class="stat c-green"><div class="stat-label">Clicks</div><div class="stat-val" style="color:var(--green)" id="an-clicks">0</div><div class="stat-hint">To SaaS</div></div>
+        <div class="stat c-orange"><div class="stat-label">Signups</div><div class="stat-val" style="color:var(--orange)" id="an-signups">0</div><div class="stat-hint">Registered users</div></div>
+        <div class="stat c-purple"><div class="stat-label">Revenue</div><div class="stat-val" style="color:var(--purple)" id="an-rev">₹0</div><div class="stat-hint">Total MRR</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Executions per hour <span class="card-sub">last 24h</span></div>
+        <div class="bars" id="exec-bars"></div>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">AI Insights</div>
+          <div id="ai-insights" style="font-size:12px;color:var(--muted);line-height:1.7">Run the growth engine to get AI-powered content insights.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Improvement Queue</div>
+          <div id="improve-queue" style="font-size:12px;color:var(--muted)">No improvements yet. Run analytics reader skill.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== COSTS ======== -->
+    <div id="pg-costs" class="page" style="display:none">
+      <div style="font-family:var(--title);font-size:18px;font-weight:800;margin-bottom:14px">Cost Guard</div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">Daily Budget <span class="card-sub" id="daily-lbl">$0 / $50</span></div>
+          <div id="detailed-costs"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Cache Performance</div>
+          <div id="cache-stats"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Token Usage by Skill</div>
+        <div class="bars" id="skill-bars" style="height:90px"></div>
+      </div>
+    </div>
+
+    <!-- ======== LOGS ======== -->
+    <div id="pg-logs" class="page" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div>
+          <div style="font-family:var(--title);font-size:18px;font-weight:800">Execution Logs</div>
+          <div style="color:var(--muted);font-size:11px">Full observability across all skills</div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="clearLogs()">Clear</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportLogs()">Export</button>
+        </div>
+      </div>
+      <div class="card" style="padding:12px">
+        <div class="log-feed" id="full-log-feed"></div>
+      </div>
+    </div>
+
+    <!-- ======== SETTINGS ======== -->
+    <div id="pg-settings" class="page" style="display:none">
+      <div style="font-family:var(--title);font-size:18px;font-weight:800;margin-bottom:14px">Settings</div>
+      <div class="g2">
+        <div class="card">
+          <div class="card-title">OpenRouter API</div>
+          <div class="field">
+            <div class="label">API Key *</div>
+            <input class="input" id="api-key-input" type="password" placeholder="sk-or-v1-...">
+          </div>
+          <div class="field">
+            <div class="label">Model</div>
+            <select class="select" id="model-select">
+              <option value="deepseek/deepseek-chat">deepseek/deepseek-chat (cheap + smart)</option>
+              <option value="openai/gpt-4o-mini">openai/gpt-4o-mini</option>
+              <option value="anthropic/claude-3-haiku">anthropic/claude-3-haiku</option>
+              <option value="mistralai/mistral-7b-instruct">mistralai/mistral-7b-instruct (free)</option>
+              <option value="meta-llama/llama-3.1-8b-instruct">meta-llama/llama-3.1-8b-instruct (free)</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">Max tokens per call</div>
+            <input class="input" id="max-tokens" type="number" value="1500">
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          <div id="settings-msg" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--green);display:none">✓ Saved</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Safety Controls</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <label style="display:flex;justify-content:space-between;align-items:center;font-size:12px">Kill Switch (System Active)<label class="toggle"><input type="checkbox" checked id="s-killswitch"><span class="tslider"></span></label></label>
+            <label style="display:flex;justify-content:space-between;align-items:center;font-size:12px">Approval at Deploy<label class="toggle"><input type="checkbox" checked id="s-approval"><span class="tslider"></span></label></label>
+            <label style="display:flex;justify-content:space-between;align-items:center;font-size:12px">Rate Limit Content<label class="toggle"><input type="checkbox" checked id="s-ratelimit"><span class="tslider"></span></label></label>
+            <label style="display:flex;justify-content:space-between;align-items:center;font-size:12px">Enable Caching<label class="toggle"><input type="checkbox" checked id="s-cache"><span class="tslider"></span></label></label>
+            <div class="field">
+              <div class="label">Max Daily Cost ($)</div>
+              <input class="input" id="s-maxcost" type="number" value="50">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- SKILL DETAIL MODAL -->
+<div class="modal-wrap" id="skill-modal">
+  <div class="modal">
+    <div id="skill-modal-body"></div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="runSkillFromModal()">⚡ Run this Skill</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('skill-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const S = {
+  apiKey: localStorage.getItem('or_key') || '',
+  model: localStorage.getItem('or_model') || 'deepseek/deepseek-chat',
+  maxTokens: parseInt(localStorage.getItem('or_tokens') || '1500'),
+  maxCost: 50,
+  systemOn: true,
+  running: false,
+  stopFlag: false,
+  totalCost: 0,
+  totalTokens: 0,
+  cacheHits: 0,
+  projects: JSON.parse(localStorage.getItem('projects') || '[]'),
+  logs: JSON.parse(localStorage.getItem('logs') || '[]'),
+  approvals: JSON.parse(localStorage.getItem('approvals') || '[]'),
+  content: JSON.parse(localStorage.getItem('content') || '[]'),
+  currentSkill: null,
+  cache: {},
+  rateLimits: { tiktok: 0, instagram: 0, youtube: 0, twitter: 0 },
+  skillRuns: {},
+};
+
+// ============================================================
+// OPENROUTER API
+// ============================================================
+async function callOR(systemPrompt, userPrompt, skillName, stream = true) {
+  if (!S.apiKey) { addLog('err', 'API', 'No OpenRouter API key! Go to Settings.'); throw new Error('no key'); }
+  if (!S.systemOn) { throw new Error('kill switch active'); }
+
+  const cacheKey = btoa(systemPrompt + userPrompt).slice(0, 80);
+  if (S.cache[cacheKey] && document.getElementById('s-cache')?.checked) {
+    S.cacheHits++;
+    addLog('cache', skillName, 'Cache HIT — skipped API call');
+    return S.cache[cacheKey];
+  }
+
+  const body = {
+    model: S.model,
+    max_tokens: S.maxTokens,
+    stream: stream,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ]
+  };
+
+  const t0 = Date.now();
+  const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${S.apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://openclaw.saas-factory.ai',
+      'X-Title': 'OpenClaw SaaS Factory'
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`OpenRouter ${resp.status}: ${err.slice(0, 200)}`);
+  }
+
+  let fullText = '';
+
+  if (stream) {
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      if (S.stopFlag) break;
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+      for (const line of lines) {
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') break;
+        try {
+          const j = JSON.parse(data);
+          const delta = j.choices?.[0]?.delta?.content || '';
+          fullText += delta;
+          streamToTerminal(delta, 'exec-terminal');
+        } catch {}
+      }
+    }
+  } else {
+    const j = await resp.json();
+    fullText = j.choices?.[0]?.message?.content || '';
+  }
+
+  const ms = Date.now() - t0;
+  const estTokens = Math.ceil(fullText.length / 3.5);
+  const estCost = estTokens * 0.0000004;
+  S.totalCost += estCost;
+  S.totalTokens += estTokens;
+  S.cache[cacheKey] = fullText;
+  updateCostDisplay();
+  addLog('ok', skillName, `Done in ${ms}ms — ~${estTokens} tokens, $${estCost.toFixed(5)}`);
+  if (S.skillRuns[skillName]) S.skillRuns[skillName] += estTokens;
+  else S.skillRuns[skillName] = estTokens;
+  return fullText;
+}
+
+// ============================================================
+// TERMINAL STREAMING
+// ============================================================
+let terminalEl = null;
+function streamToTerminal(text, termId) {
+  const el = document.getElementById(termId);
+  if (!el) return;
+  const cursor = el.querySelector('.cursor');
+  if (cursor) cursor.remove();
+  el.innerHTML += escapeHTML(text);
+  el.scrollTop = el.scrollHeight;
+}
+
+function terminalWrite(termId, text, cls = '') {
+  const el = document.getElementById(termId);
+  if (!el) return;
+  const cursor = el.querySelector('.cursor');
+  if (cursor) cursor.remove();
+  const span = document.createElement('span');
+  span.className = cls;
+  span.textContent = text;
+  el.appendChild(span);
+  const c = document.createElement('span');
+  c.className = 'cursor';
+  el.appendChild(c);
+  el.scrollTop = el.scrollHeight;
+}
+
+function terminalLine(termId, text, cls = 't-dim') {
+  const el = document.getElementById(termId);
+  if (!el) return;
+  const cursor = el.querySelector('.cursor');
+  if (cursor) cursor.remove();
+  el.innerHTML += `<span class="${cls}">${escapeHTML(text)}</span>\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function escapeHTML(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function clearTerminal(id) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = '';
+}
+
+// ============================================================
+// SKILL PROMPTS
+// ============================================================
+const SKILLS = [
+  {
+    name: 'real_idea_validator', layer: 'validation', icon: '🎯',
+    desc: 'BUILD/PIVOT/DROP. Scores demand, uniqueness, market size.',
+    tag: 'tag-g',
+    system: `You are a SaaS idea validator. Analyze the idea and return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "decision": "BUILD|PIVOT|DROP",
+    "score": <0-30>,
+    "problem_clarity": <0-10>,
+    "solution_uniqueness": <0-10>,
+    "market_size": <0-10>,
+    "reasoning": "<2 sentences>",
+    "risks": ["risk1","risk2"],
+    "opportunities": ["opp1","opp2"]
+  },
+  "next_recommended_skill": "market_researcher"
+}
+Return ONLY the JSON object. No markdown, no explanation.`,
+    userPrompt: (input) => `Idea: ${input.idea}\nTarget users: ${input.audience || 'general'}\nProblem: ${input.problem || 'not specified'}`
+  },
+  {
+    name: 'market_researcher', layer: 'validation', icon: '🔬',
+    desc: 'TAM/SAM/SOM, growth rate, trends, key players.',
+    tag: 'tag-g',
+    system: `You are a market researcher. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "tam": "$<X>B",
+    "sam": "$<X>M",
+    "som": "$<X>M",
+    "growth_rate": "<X>% CAGR",
+    "trend": "rising|stable|declining",
+    "key_players": ["name1","name2","name3"],
+    "opportunity_gap": "<what's missing>",
+    "sources": ["where to verify"]
+  },
+  "next_recommended_skill": "problem_finder"
+}
+Return ONLY the JSON. No markdown.`,
+    userPrompt: (input) => `SaaS idea: ${input.idea}\nNiche: ${input.audience || 'B2B software'}`
+  },
+  {
+    name: 'problem_finder', layer: 'validation', icon: '😤',
+    desc: 'Real user pain points. Reddit/Quora style language.',
+    tag: 'tag-g',
+    system: `You are a problem researcher. Find real user pain points. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "top_problem": "<clearest problem statement>",
+    "problems": [
+      {
+        "statement": "<natural language like Reddit>",
+        "severity": <1-10>,
+        "frequency": "daily|weekly|monthly",
+        "source_type": "reddit|quora|twitter|support",
+        "saas_angle": "<how SaaS solves this>"
+      }
+    ],
+    "pain_phrases": ["phrase1","phrase2","phrase3"],
+    "content_hooks": ["hook1","hook2","hook3"]
+  },
+  "next_recommended_skill": "feature_planner"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS idea: ${input.idea}\nAudience: ${input.audience}`
+  },
+  {
+    name: 'feature_planner', layer: 'product', icon: '📋',
+    desc: 'MVP features only. Strict scope, no bloat.',
+    tag: 'tag-b',
+    system: `You are a SaaS product manager. Define MVP only — 3-5 core features. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "problem_statement": "<one line>",
+    "core_features": [
+      {
+        "name": "<feature>",
+        "description": "<what it does>",
+        "user_story": "As a [user], I want [X] so that [Y]",
+        "priority": "P0|P1|P2",
+        "complexity": "low|medium|high"
+      }
+    ],
+    "excluded_features": ["feature not in MVP","feature2"],
+    "target_users": "<description>",
+    "value_proposition": "<one sentence>"
+  },
+  "next_recommended_skill": "saas_architect"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `Idea: ${input.idea}\nAudience: ${input.audience}\nProblem: ${input.problem}`
+  },
+  {
+    name: 'saas_architect', layer: 'architecture', icon: '🏗️',
+    desc: 'Pages, API routes, DB schema. Next.js native.',
+    tag: 'tag-b',
+    system: `You are a SaaS architect. Design the technical architecture. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "stack": {
+      "frontend": "Next.js 14 App Router + TailwindCSS + shadcn/ui",
+      "backend": "Next.js API Routes",
+      "database": "PostgreSQL via Supabase",
+      "auth": "Clerk or Supabase Auth",
+      "payments": "Stripe",
+      "ai": "OpenAI API",
+      "hosting": "Vercel + Supabase"
+    },
+    "pages": [
+      {"route": "/", "name": "Landing", "components": ["Hero","Features","Pricing"], "auth": false},
+      {"route": "/dashboard", "name": "Dashboard", "components": ["Sidebar","MainView"], "auth": true}
+    ],
+    "api_routes": [
+      {"method": "POST", "path": "/api/feature", "desc": "what it does", "auth": true}
+    ],
+    "db_models": [
+      {"name": "User", "fields": ["id","email","created_at"]},
+      {"name": "Subscription", "fields": ["id","userId","plan","status"]}
+    ],
+    "env_vars": ["DATABASE_URL","NEXTAUTH_SECRET","STRIPE_SECRET_KEY","OPENAI_API_KEY"]
+  },
+  "next_recommended_skill": "frontend_patcher"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `Features: ${JSON.stringify(input.features || ['core feature'])}\nIdea: ${input.idea}`
+  },
+  {
+    name: 'pricing_strategy', layer: 'product', icon: '💰',
+    desc: 'Free vs paid tiers, conversion triggers, LTV.',
+    tag: 'tag-b',
+    system: `You are a SaaS pricing expert. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "model": "freemium|subscription|usage_based",
+    "tiers": [
+      {"name": "Free", "price": 0, "features": ["f1","f2"], "limit": "100 items/month"},
+      {"name": "Pro", "price": 29, "features": ["f1","f2","f3"], "limit": "unlimited"},
+      {"name": "Business", "price": 99, "features": ["everything"], "limit": "API access"}
+    ],
+    "annual_discount": "20%",
+    "conversion_triggers": ["when user hits limit","when team grows"],
+    "positioning": "competitive|premium|budget",
+    "estimated_ltv": "$<X>"
+  },
+  "next_recommended_skill": "frontend_patcher"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `Idea: ${input.idea}\nAudience: ${input.audience}`
+  },
+  {
+    name: 'frontend_patcher', layer: 'build', icon: '⚛️',
+    desc: 'Patches Next.js template. Never from scratch.',
+    tag: 'tag-o',
+    system: `You are a Next.js developer. Generate patch instructions for the SaaS template. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "template": "nextjs-saas-starter",
+    "patches": [
+      {
+        "file": "src/app/page.tsx",
+        "operation": "replace_section",
+        "target": "// HERO_SECTION",
+        "with": "<Hero title='SaaS Name' description='value prop' cta='Get Started Free' />"
+      },
+      {
+        "file": "src/lib/config.ts",
+        "operation": "add_line",
+        "after": "// APP_CONFIG",
+        "line": "export const APP_NAME = 'SaaSName';"
+      }
+    ],
+    "new_components": [
+      {
+        "path": "src/components/Dashboard.tsx",
+        "description": "Main dashboard view",
+        "props": ["user","data"]
+      }
+    ],
+    "env_additions": ["NEXT_PUBLIC_APP_NAME=YourSaaS"]
+  },
+  "next_recommended_skill": "backend_patcher"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.idea}\nPages: ${JSON.stringify(input.pages || ['/','dashboard'])}\nFeatures: ${JSON.stringify(input.features || [])}`
+  },
+  {
+    name: 'backend_patcher', layer: 'build', icon: '🔌',
+    desc: 'API routes with Zod validation + error handling.',
+    tag: 'tag-o',
+    system: `You are a Node.js/Next.js backend developer. Generate API route code. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "api_routes": [
+      {
+        "path": "/api/endpoint",
+        "method": "POST",
+        "file": "src/app/api/endpoint/route.ts",
+        "code": "import { NextRequest, NextResponse } from 'next/server';\nimport { z } from 'zod';\n\nconst schema = z.object({ input: z.string() });\n\nexport async function POST(req: NextRequest) {\n  try {\n    const body = await req.json();\n    const { input } = schema.parse(body);\n    return NextResponse.json({ success: true, data: input });\n  } catch (e) {\n    return NextResponse.json({ error: 'Bad Request' }, { status: 400 });\n  }\n}"
+      }
+    ],
+    "db_operations": ["prisma.user.create","prisma.subscription.upsert"],
+    "dependencies": ["@/lib/prisma","stripe","openai","zod"]
+  },
+  "next_recommended_skill": "auth_integrator"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `API routes needed: ${JSON.stringify(input.api_routes || [])}\nSaaS: ${input.idea}`
+  },
+  {
+    name: 'auth_integrator', layer: 'build', icon: '🔐',
+    desc: 'Clerk or Supabase Auth — login/signup/session.',
+    tag: 'tag-o',
+    system: `You are an auth integration specialist. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "provider": "Clerk",
+    "setup_steps": ["Install Clerk","Configure env vars","Wrap app in ClerkProvider","Add middleware"],
+    "files_to_modify": ["src/app/layout.tsx","middleware.ts","src/app/api/auth/[...nextauth]/route.ts"],
+    "env_vars": ["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY","CLERK_SECRET_KEY"],
+    "components": ["<SignInButton/>","<UserButton/>","<SignedIn/>","<SignedOut/>"],
+    "middleware_code": "import { authMiddleware } from '@clerk/nextjs';\nexport default authMiddleware({ publicRoutes: ['/','api/webhook'] });\nexport const config = { matcher: ['/((?!.+\\.[\\w]+$)|)', '/', '/(api|trpc)(.*)'] };"
+  },
+  "next_recommended_skill": "payment_integrator"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.idea}\nRequires auth for: dashboard, API routes`
+  },
+  {
+    name: 'payment_integrator', layer: 'build', icon: '💳',
+    desc: 'Stripe subscriptions, webhooks, customer portal.',
+    tag: 'tag-o',
+    system: `You are a Stripe integration specialist. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "stripe_products": [
+      {"name": "Pro", "price_id": "price_xxx", "amount": 2900, "interval": "month"},
+      {"name": "Business", "price_id": "price_yyy", "amount": 9900, "interval": "month"}
+    ],
+    "webhook_events": ["checkout.session.completed","customer.subscription.updated","customer.subscription.deleted"],
+    "files": ["src/lib/stripe.ts","src/app/api/webhooks/stripe/route.ts","src/app/api/create-checkout/route.ts"],
+    "env_vars": ["STRIPE_SECRET_KEY","STRIPE_WEBHOOK_SECRET","NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"],
+    "customer_portal": true,
+    "trial_days": 14
+  },
+  "next_recommended_skill": "build_validator"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.idea}\nPricing tiers: Free, Pro ($29/mo), Business ($99/mo)`
+  },
+  {
+    name: 'build_validator', layer: 'deploy', icon: '✅',
+    desc: 'TypeScript check + env vars + API route validation.',
+    tag: 'tag-p',
+    system: `You are a QA engineer. Validate the SaaS build. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "typescript_valid": true,
+    "env_vars_complete": true,
+    "api_routes_valid": true,
+    "auth_configured": true,
+    "payments_configured": true,
+    "issues": [],
+    "warnings": ["warning if any"],
+    "security_score": <0-100>,
+    "performance_score": <0-100>,
+    "deployment_ready": true,
+    "checklist": {
+      "authentication": true,
+      "payments": true,
+      "database": true,
+      "error_handling": true,
+      "rate_limiting": false,
+      "monitoring": false
+    }
+  },
+  "next_recommended_skill": "env_injector"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.idea}\nBuild completed by previous skills. Validate all layers are production-ready.`
+  },
+  {
+    name: 'env_injector', layer: 'deploy', icon: '🔑',
+    desc: 'Safe env var management, never exposes secrets.',
+    tag: 'tag-p',
+    system: `You are a DevOps engineer. Generate safe environment configuration. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "env_example": {
+      "DATABASE_URL": "postgresql://user:pass@host/db",
+      "NEXTAUTH_SECRET": "generate-with-openssl",
+      "NEXTAUTH_URL": "https://yourdomain.com",
+      "STRIPE_SECRET_KEY": "sk_live_...",
+      "STRIPE_WEBHOOK_SECRET": "whsec_...",
+      "OPENAI_API_KEY": "sk-...",
+      "NEXT_PUBLIC_APP_URL": "https://yourdomain.com"
+    },
+    "vercel_commands": ["vercel env add DATABASE_URL production","vercel env add NEXTAUTH_SECRET production"],
+    "secret_vars": ["DATABASE_URL","NEXTAUTH_SECRET","STRIPE_SECRET_KEY"],
+    "public_vars": ["NEXT_PUBLIC_APP_URL","NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"]
+  },
+  "next_recommended_skill": "deploy_manager"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS stack: Next.js + Supabase + Stripe + Clerk\nSaaS: ${input.idea}`
+  },
+  {
+    name: 'problem_miner', layer: 'growth', icon: '⛏️',
+    desc: 'SaaS-specific content ideas from real user pain.',
+    tag: 'tag-g',
+    system: `You are a content researcher. Find real problems for content creation. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "saas_problems": [
+      {
+        "problem": "<natural language>",
+        "audience": "<who says this>",
+        "saas_solution": "<how SaaS fixes this>",
+        "content_angle": "pain|story|demo|shock",
+        "viral_potential": "high|medium|low",
+        "hook": "<first 3 second line>"
+      }
+    ],
+    "trending_keywords": ["keyword1","keyword2"],
+    "best_platform": "TikTok|YouTube|Instagram|LinkedIn"
+  },
+  "next_recommended_skill": "script_writer"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.saas}\nAudience: ${input.audience}\nProblem solved: ${input.problem}`
+  },
+  {
+    name: 'script_writer', layer: 'growth', icon: '✍️',
+    desc: '20–30s short-form scripts. Hook → Pain → Demo → CTA.',
+    tag: 'tag-g',
+    system: `You are a viral video script writer. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "scripts": [
+      {
+        "angle": "pain|story|demo",
+        "title": "<video title>",
+        "duration_sec": 28,
+        "hook": "<first 3 seconds>",
+        "body": "<15-20 seconds script>",
+        "cta": "<last 5 seconds — visit link>",
+        "caption": "<social media caption with hashtags>",
+        "platform": "TikTok|Instagram|YouTube",
+        "score": <0-100>
+      }
+    ]
+  },
+  "next_recommended_skill": "content_poster"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.saas}\nAudience: ${input.audience}\nProblems: ${JSON.stringify(input.problems || [])}\nLink: https://${(input.saas||'yoursaas').toLowerCase().replace(/\s/g,'')}.vercel.app`
+  },
+  {
+    name: 'analytics_reader', layer: 'analytics', icon: '📊',
+    desc: 'Reads metrics, tracks conversions, surfaces insights.',
+    tag: 'tag-p',
+    system: `You are a data analyst. Analyze SaaS performance. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "metrics": {
+      "views": <number>,
+      "clicks": <number>,
+      "signups": <number>,
+      "paid_users": <number>,
+      "conversion_rate": "<X>%",
+      "churn_rate": "<X>%"
+    },
+    "top_performing_content": ["title1","title2"],
+    "best_channel": "TikTok|YouTube|organic",
+    "insights": ["insight1","insight2","insight3"],
+    "recommendations": ["action1","action2"]
+  },
+  "next_recommended_skill": "product_improver"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.idea || 'unknown'}\nUsers: ${input.users || 0}\nRevenue: ${input.revenue || 0}`
+  },
+  {
+    name: 'product_improver', layer: 'analytics', icon: '📈',
+    desc: 'Roadmap suggestions from analytics + feedback.',
+    tag: 'tag-p',
+    system: `You are a product manager. Suggest improvements. Return ONLY valid JSON.
+Output schema:
+{
+  "status": "success",
+  "confidence": <0-100>,
+  "data": {
+    "quick_wins": [{"improvement":"<what>","effort":"low","impact":"high","estimate":"hours"}],
+    "feature_requests": [{"feature":"<name>","frequency":<n>,"priority":"high|med|low"}],
+    "ux_fixes": ["fix1","fix2"],
+    "next_quarter_roadmap": ["item1","item2","item3"]
+  },
+  "next_recommended_skill": "script_writer"
+}
+Return ONLY the JSON.`,
+    userPrompt: (input) => `SaaS: ${input.idea || 'unknown'}\nFeedback: users want faster load times, more export options, dark mode`
+  }
+];
+
+// ============================================================
+// FACTORY PIPELINE
+// ============================================================
+const PIPELINE = [
+  { id: 'validate', name: 'Validate', skill: 'real_idea_validator' },
+  { id: 'research', name: 'Research', skill: 'market_researcher' },
+  { id: 'problems', name: 'Problems', skill: 'problem_finder' },
+  { id: 'features', name: 'Features', skill: 'feature_planner' },
+  { id: 'architect', name: 'Architect', skill: 'saas_architect' },
+  { id: 'pricing', name: 'Pricing', skill: 'pricing_strategy' },
+  { id: 'frontend', name: 'Frontend', skill: 'frontend_patcher' },
+  { id: 'backend', name: 'Backend', skill: 'backend_patcher' },
+  { id: 'auth', name: 'Auth', skill: 'auth_integrator' },
+  { id: 'payments', name: 'Payments', skill: 'payment_integrator' },
+  { id: 'validate2', name: 'QA', skill: 'build_validator' },
+  { id: 'env', name: 'Env', skill: 'env_injector' },
+];
+
+function renderPipeline(containerId, activeIdx, states = {}) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = PIPELINE.map((p, i) => {
+    let cls = 'pipe-step waiting';
+    let st = 'waiting';
+    if (states[p.id] === 'done') { cls = 'pipe-step done'; st = '✓'; }
+    else if (states[p.id] === 'running') { cls = 'pipe-step running'; st = '⟳'; }
+    else if (states[p.id] === 'error') { cls = 'pipe-step error'; st = '✗'; }
+    return `<div class="${cls}"><div class="pipe-num">${String(i+1).padStart(2,'0')}</div><div class="pipe-name">${p.name}</div><div class="pipe-st">${st}</div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// FACTORY LAUNCH
+// ============================================================
+async function launchFactory() {
+  if (!S.apiKey) { go('settings'); return; }
+  if (S.running) return;
+  if (!S.systemOn) { alert('Kill switch is active!'); return; }
+
+  const idea = document.getElementById('b-idea').value.trim();
+  if (!idea) { document.getElementById('b-idea').focus(); return; }
+  const audience = document.getElementById('b-audience').value.trim() || 'businesses';
+  const problem = document.getElementById('b-problem').value.trim() || 'unknown pain point';
+  const dryRun = document.getElementById('t-dry').checked;
+  const needsApproval = document.getElementById('t-approval').checked;
+
+  S.running = true;
+  S.stopFlag = false;
+  document.getElementById('launch-btn').disabled = true;
+  document.getElementById('stop-btn').style.display = 'inline-flex';
+
+  const execCard = document.getElementById('exec-card');
+  execCard.style.display = 'block';
+  clearTerminal('exec-terminal');
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('approval-gate').style.display = 'none';
+
+  const pipeStates = {};
+  renderPipeline('exec-pipe', -1, pipeStates);
+
+  const projectId = 'proj_' + Date.now();
+  const memory = { idea, audience, problem };
+  let allResults = {};
+
+  const termId = 'exec-terminal';
+  terminalLine(termId, `\n$ openclaw run --idea "${idea.substring(0,50)}"`, 't-prompt');
+  terminalLine(termId, `> Mode: ${dryRun ? 'DRY RUN' : 'LIVE'} | Model: ${S.model}`, 't-dim');
+  terminalLine(termId, `> Safety: kill-switch=ON idempotency=ON cost-guard=ON`, 't-dim');
+  terminalLine(termId, `> Project ID: ${projectId}\n`, 't-dim');
+
+  addLog('info', 'Factory', `Starting run: "${idea}" [${dryRun ? 'DRY RUN' : 'LIVE'}]`);
+
+  let completedSteps = 0;
+  for (const step of PIPELINE) {
+    if (S.stopFlag) { terminalLine(termId, '\n> Stopped by user.', 't-warn'); break; }
+
+    pipeStates[step.id] = 'running';
+    renderPipeline('exec-pipe', PIPELINE.indexOf(step), pipeStates);
+    const pct = Math.round((completedSteps / PIPELINE.length) * 100);
+    document.getElementById('exec-prog').style.width = pct + '%';
+    document.getElementById('exec-phase').textContent = `${step.name} (${completedSteps+1}/${PIPELINE.length})`;
+
+    const skill = SKILLS.find(s => s.name === step.skill);
+    if (!skill) { pipeStates[step.id] = 'done'; completedSteps++; continue; }
+
+    terminalLine(termId, `\n[${String(PIPELINE.indexOf(step)+1).padStart(2,'0')}/${PIPELINE.length}] ${step.skill}`, 't-info');
+    terminalLine(termId, `> ${skill.desc}`, 't-dim');
+
+    if (dryRun) {
+      terminalLine(termId, `> DRY RUN: simulating...`, 't-warn');
+      await sleep(400);
+      const simCost = (Math.random() * 0.005).toFixed(5);
+      terminalLine(termId, `> Simulated — cost: ~$${simCost}`, 't-ok');
+      pipeStates[step.id] = 'done';
+      completedSteps++;
+      continue;
+    }
+
+    try {
+      const input = { ...memory, ...allResults };
+      const userMsg = skill.userPrompt(input);
+
+      terminalLine(termId, '> Calling OpenRouter... streaming response:', 't-dim');
+
+      let rawOutput = await callOR(skill.system, userMsg, skill.name, document.getElementById('t-stream').checked);
+
+      terminalLine(termId, '', '');
+
+      // Parse JSON
+      let parsed = null;
+      try {
+        const jsonMatch = rawOutput.match(/\{[\s\S]*\}/);
+        if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+      } catch(e) {}
+
+      if (parsed?.data) {
+        allResults = { ...allResults, ...parsed.data };
+        memory[step.skill] = parsed.data;
+        showJSONResult(parsed);
+        terminalLine(termId, `> ✓ Parsed. Confidence: ${parsed.confidence || '?'}%`, 't-ok');
+      } else {
+        terminalLine(termId, `> Warning: non-JSON response, storing raw`, 't-warn');
+      }
+
+      pipeStates[step.id] = 'done';
+      addLog('ok', step.skill, `Completed step ${completedSteps+1}/${PIPELINE.length}`);
+    } catch(err) {
+      terminalLine(termId, `> ERROR: ${err.message}`, 't-err');
+      pipeStates[step.id] = 'error';
+      addLog('err', step.skill, err.message);
+      if (err.message.includes('kill switch') || err.message.includes('no key')) break;
+    }
+
+    completedSteps++;
+    await sleep(200);
+  }
+
+  document.getElementById('exec-prog').style.width = '100%';
+  renderPipeline('exec-pipe', -1, pipeStates);
+
+  if (!dryRun && !S.stopFlag) {
+    terminalLine(termId, '\n> ✓ All skills completed.', 't-ok');
+    if (needsApproval && S.systemOn) {
+      terminalLine(termId, '> Approval gate active — review output and approve deploy.', 't-warn');
+      document.getElementById('approval-gate').style.display = 'block';
+      addApproval({ title: `${idea} → Deploy to Production`, meta: `Vercel + Supabase | Project: ${projectId}` });
+    } else {
+      terminalLine(termId, '> Auto-deploy enabled — deploying now...', 't-info');
+    }
+
+    // Save project
+    S.projects.push({
+      id: projectId, name: idea.substring(0, 30),
+      audience, status: 'built', phase: 'Deploy',
+      users: 0, cost: S.totalCost.toFixed(3),
+      created: new Date().toLocaleString()
+    });
+    saveState();
+    updateOverview();
+    terminalLine(termId, `\n$ Project saved: ${projectId}`, 't-prompt');
+  }
+
+  S.running = false;
+  document.getElementById('launch-btn').disabled = false;
+  document.getElementById('stop-btn').style.display = 'none';
+  document.getElementById('exec-phase').textContent = S.stopFlag ? 'Stopped' : 'Complete';
+}
+
+function showJSONResult(data) {
+  const el = document.getElementById('json-output');
+  const rs = document.getElementById('result-section');
+  if (!el || !rs) return;
+  rs.style.display = 'block';
+  el.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+  el.scrollTop = 0;
+}
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+    .replace(/: "([^"]*)"([,\n])/g, ': <span class="json-str">"$1"</span>$2')
+    .replace(/: (\d+\.?\d*)([,\n}])/g, ': <span class="json-num">$1</span>$2')
+    .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
+    .replace(/: null/g, ': <span class="json-null">null</span>');
+}
+
+async function stopRun() {
+  S.stopFlag = true;
+  S.running = false;
+  document.getElementById('launch-btn').disabled = false;
+  document.getElementById('stop-btn').style.display = 'none';
+}
+
+async function runDryRun() {
+  document.getElementById('t-dry').checked = true;
+  launchFactory();
+}
+
+// ============================================================
+// GROWTH ENGINE
+// ============================================================
+async function runGrowthAI() {
+  if (!S.apiKey) { go('settings'); return; }
+  const saas = document.getElementById('g-saas').value.trim() || 'My SaaS';
+  const audience = document.getElementById('g-audience').value.trim() || 'users';
+  const problem = document.getElementById('g-problem').value.trim() || 'manual work';
+
+  const term = document.getElementById('growth-terminal');
+  term.style.display = 'block';
+  term.innerHTML = '';
+
+  const scripts = document.getElementById('growth-scripts');
+  scripts.innerHTML = '';
+
+  terminalLine('growth-terminal', `$ openclaw grow --saas "${saas}"`, 't-prompt');
+  terminalLine('growth-terminal', '> Step 1: Mining problems...', 't-dim');
+
+  try {
+    const minerSkill = SKILLS.find(s => s.name === 'problem_miner');
+    const writerSkill = SKILLS.find(s => s.name === 'script_writer');
+
+    let minerOut = await callOR(minerSkill.system, minerSkill.userPrompt({ saas, audience, problem }), 'problem_miner', true);
+    terminalLine('growth-terminal', '\n> Step 2: Writing scripts...', 't-dim');
+
+    let minerParsed = null;
+    try { const m = minerOut.match(/\{[\s\S]*\}/); if(m) minerParsed = JSON.parse(m[0]); } catch {}
+
+    const problems = minerParsed?.data?.saas_problems?.map(p => p.problem) || [problem];
+
+    let writerOut = await callOR(writerSkill.system, writerSkill.userPrompt({ saas, audience, problems }), 'script_writer', true);
+
+    let writerParsed = null;
+    try { const m = writerOut.match(/\{[\s\S]*\}/); if(m) writerParsed = JSON.parse(m[0]); } catch {}
+
+    terminalLine('growth-terminal', '\n> ✓ Growth cycle complete!', 't-ok');
+
+    if (writerParsed?.data?.scripts) {
+      writerParsed.data.scripts.forEach((sc, i) => {
+        const item = { id: 'cnt_' + Date.now() + i, saas, ...sc };
+        S.content.push(item);
+        scripts.innerHTML += `
+          <div class="cq-item" style="margin-top:8px">
+            <div class="cq-icon" style="background:var(--green-dim)">${i===0?'🎬':'📸'}</div>
+            <div class="cq-body">
+              <div class="cq-platform">${sc.platform||'TikTok'} • ${saas} • ${sc.angle||'pain'}</div>
+              <div class="cq-title">${sc.title || sc.hook}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6"><strong style="color:var(--text)">Hook:</strong> ${sc.hook}<br><strong style="color:var(--text)">CTA:</strong> ${sc.cta}</div>
+              <div class="cq-stats">Score: ${sc.score||'—'}/100 • Duration: ${sc.duration_sec||28}s</div>
+            </div>
+            <div class="cq-acts">
+              <button class="btn btn-ghost btn-sm" onclick="approveContent('${item.id}')">Approve</button>
+            </div>
+          </div>`;
+      });
+      saveState();
+    }
+
+    // Update mined list
+    if (minerParsed?.data?.saas_problems) {
+      document.getElementById('mined-list').innerHTML = minerParsed.data.saas_problems.map(p => `
+        <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:11px">
+          <div>"${p.problem}"</div>
+          <div style="font-family:var(--mono);font-size:9px;color:var(--accent);margin-top:2px">${p.content_angle} • ${p.viral_potential} viral</div>
+        </div>`).join('');
+    }
+  } catch(err) {
+    terminalLine('growth-terminal', `> ERROR: ${err.message}`, 't-err');
+    addLog('err', 'GrowthEngine', err.message);
+  }
+}
+
+function approveContent(id) {
+  const item = S.content.find(c => c.id === id);
+  if (item) {
+    item.approved = true;
+    addLog('ok', 'ContentPoster', `Approved: ${item.title || item.hook}`);
+    addApproval({ title: `Post content: "${(item.title||item.hook).substring(0,40)}..."`, meta: `Platform: ${item.platform||'TikTok'} | SaaS: ${item.saas}` });
+    saveState();
+    renderContentQueue();
+  }
+}
+
+// ============================================================
+// APPROVALS
+// ============================================================
+function addApproval(appr) {
+  S.approvals.push({ id: 'a_' + Date.now(), ...appr, time: new Date().toLocaleString(), status: 'pending' });
+  saveState();
+  updateApprovalCount();
+  renderApprovals();
+  renderOverviewApprovals();
+}
+
+function approveItem(id) {
+  const a = S.approvals.find(x => x.id === id);
+  if (a) { a.status = 'approved'; addLog('ok', 'Approval', `Approved: ${a.title}`); saveState(); renderApprovals(); updateApprovalCount(); renderOverviewApprovals(); }
+}
+
+function rejectItem(id) {
+  const a = S.approvals.find(x => x.id === id);
+  if (a) { a.status = 'rejected'; addLog('warn', 'Approval', `Rejected: ${a.title}`); saveState(); renderApprovals(); updateApprovalCount(); renderOverviewApprovals(); }
+}
+
+function renderApprovals() {
+  const el = document.getElementById('approvals-list');
+  if (!el) return;
+  const pending = S.approvals.filter(a => a.status === 'pending');
+  if (!pending.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:20px 0">No pending approvals. Great!</div>'; return; }
+  el.innerHTML = pending.map(a => `
+    <div class="appr">
+      <div class="appr-body">
+        <div class="appr-title">${a.title}</div>
+        <div class="appr-meta">${a.meta}<br>Requested: ${a.time}</div>
+      </div>
+      <div class="appr-acts">
+        <button class="btn btn-ghost btn-sm" onclick="rejectItem('${a.id}')">Reject</button>
+        <button class="btn btn-primary btn-sm" onclick="approveItem('${a.id}')">✓ Approve</button>
+      </div>
+    </div>`).join('');
+}
+
+function approveAndDeploy() {
+  terminalLine('exec-terminal', '\n> ✓ Deployment approved by user.', 't-ok');
+  terminalLine('exec-terminal', '> Pushing to GitHub...', 't-dim');
+  terminalLine('exec-terminal', '> Deploying to Vercel...', 't-dim');
+  setTimeout(() => {
+    terminalLine('exec-terminal', '> ✓ Deployed: https://your-saas.vercel.app', 't-ok');
+    addLog('ok', 'Deployer', 'SaaS deployed to Vercel');
+  }, 1200);
+  document.getElementById('approval-gate').style.display = 'none';
+  const p = S.projects[S.projects.length - 1];
+  if (p) { p.status = 'live'; p.phase = 'Growth'; saveState(); }
+  updateOverview();
+}
+
+function rejectDeploy() {
+  document.getElementById('approval-gate').style.display = 'none';
+  terminalLine('exec-terminal', '> Deploy rejected. Fix issues and re-run.', 't-warn');
+}
+
+// ============================================================
+// SKILLS
+// ============================================================
+let activeSkillFilter = 'all';
+let selectedSkill = null;
+
+function renderSkillGrid() {
+  const grid = document.getElementById('skill-grid');
+  if (!grid) return;
+  const filtered = activeSkillFilter === 'all' ? SKILLS : SKILLS.filter(s => s.layer === activeSkillFilter);
+  grid.innerHTML = filtered.map(s => `
+    <div class="sk ${selectedSkill?.name === s.name ? 'active' : ''}" onclick="selectSkill('${s.name}')">
+      <div class="sk-layer">${s.layer}</div>
+      <div class="sk-name">${s.icon} ${s.name}</div>
+      <div class="sk-desc">${s.desc}</div>
+      <span class="sk-tag ${s.tag}">openrouter</span>
+    </div>`).join('');
+}
+
+function filterSkills(layer) {
+  activeSkillFilter = layer;
+  renderSkillGrid();
+}
+
+function selectSkill(name) {
+  selectedSkill = SKILLS.find(s => s.name === name);
+  if (!selectedSkill) return;
+  const body = document.getElementById('skill-modal-body');
+  body.innerHTML = `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--accent-dim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:20px">${selectedSkill.icon}</div>
+      <div>
+        <div style="font-family:var(--title);font-size:15px;font-weight:800">${selectedSkill.name}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--muted)">${selectedSkill.layer} layer</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px">${selectedSkill.desc}</div>
+    <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:5px;letter-spacing:1px">SYSTEM PROMPT</div>
+    <div style="background:#020407;border:1px solid var(--border);border-radius:6px;padding:10px;font-family:var(--mono);font-size:10px;color:var(--green);white-space:pre-wrap;max-height:160px;overflow-y:auto;line-height:1.6">${escapeHTML(selectedSkill.system)}</div>
+    <div style="margin-top:10px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:1px">TEST INPUT</div>
+    <textarea class="textarea" id="skill-test-input" style="margin-top:5px" placeholder="Enter test input to run this skill...">${selectedSkill.name.includes('miner') || selectedSkill.name.includes('writer') ? 'SaaS: ResumeAI\nAudience: job seekers\nProblem: getting rejected by ATS' : 'idea: AI resume builder\naudience: job seekers\nproblem: manual resume writing'}</textarea>`;
+  document.getElementById('skill-modal').classList.add('open');
+}
+
+async function runSkillFromModal() {
+  if (!selectedSkill) return;
+  if (!S.apiKey) { closeModal('skill-modal'); go('settings'); return; }
+  const rawInput = document.getElementById('skill-test-input').value;
+  const input = parseRawInput(rawInput);
+
+  closeModal('skill-modal');
+  go('build');
+  const execCard = document.getElementById('exec-card');
+  execCard.style.display = 'block';
+  clearTerminal('exec-terminal');
+  document.getElementById('result-section').style.display = 'none';
+
+  terminalLine('exec-terminal', `$ openclaw skill run ${selectedSkill.name}`, 't-prompt');
+  terminalLine('exec-terminal', `> Input: ${rawInput.substring(0, 80)}`, 't-dim');
+  terminalLine('exec-terminal', '> Calling OpenRouter...\n', 't-dim');
+
+  try {
+    const out = await callOR(selectedSkill.system, selectedSkill.userPrompt(input), selectedSkill.name, true);
+    terminalLine('exec-terminal', '\n', '');
+    let parsed = null;
+    try { const m = out.match(/\{[\s\S]*\}/); if(m) parsed = JSON.parse(m[0]); } catch {}
+    if (parsed) showJSONResult(parsed);
+    else terminalLine('exec-terminal', '> Raw output stored above', 't-warn');
+    terminalLine('exec-terminal', '\n> ✓ Skill completed.', 't-ok');
+  } catch(e) {
+    terminalLine('exec-terminal', `\n> ERROR: ${e.message}`, 't-err');
+  }
+}
+
+function parseRawInput(raw) {
+  const lines = raw.split('\n');
+  const result = {};
+  lines.forEach(l => {
+    const [k, ...v] = l.split(':');
+    if (k && v.length) result[k.trim()] = v.join(':').trim();
+  });
+  return result;
+}
+
+// ============================================================
+// LOGS
+// ============================================================
+function addLog(level, skill, msg) {
+  const t = new Date().toTimeString().slice(0,8);
+  const entry = { t, level, skill, msg };
+  S.logs.unshift(entry);
+  if (S.logs.length > 500) S.logs = S.logs.slice(0, 500);
+
+  const liveEl = document.getElementById('live-log');
+  if (liveEl) {
+    const clsMap = { ok:'lb-ok', err:'lb-err', warn:'lb-warn', info:'lb-info', cache:'lb-cache' };
+    const row = document.createElement('div');
+    row.className = 'log-row';
+    row.innerHTML = `<span class="log-t">${t}</span><span class="log-badge ${clsMap[level]||'lb-info'}">${level.toUpperCase()}</span><span class="log-msg"><strong style="color:var(--muted)">[${skill}]</strong> ${msg}</span>`;
+    liveEl.insertBefore(row, liveEl.firstChild);
+    if (liveEl.children.length > 12) liveEl.removeChild(liveEl.lastChild);
+    const cnt = document.getElementById('live-log-count');
+    if (cnt) cnt.textContent = S.logs.length + ' entries';
+  }
+
+  const fullEl = document.getElementById('full-log-feed');
+  if (fullEl) {
+    const clsMap = { ok:'lb-ok', err:'lb-err', warn:'lb-warn', info:'lb-info', cache:'lb-cache' };
+    const row = document.createElement('div');
+    row.className = 'log-row';
+    row.innerHTML = `<span class="log-t">${t}</span><span class="log-badge ${clsMap[level]||'lb-info'}">${level.toUpperCase()}</span><span class="log-msg"><strong style="color:var(--muted)">[${skill}]</strong> ${msg}</span>`;
+    fullEl.insertBefore(row, fullEl.firstChild);
+  }
+}
+
+function clearLogs() { S.logs = []; saveState(); document.getElementById('live-log').innerHTML = ''; document.getElementById('full-log-feed').innerHTML = ''; }
+function exportLogs() {
+  const blob = new Blob([S.logs.map(l => `${l.t} [${l.level}] ${l.skill}: ${l.msg}`).join('\n')], {type:'text/plain'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'factory-logs.txt'; a.click();
+}
+
+// ============================================================
+// COST DISPLAY
+// ============================================================
+function updateCostDisplay() {
+  const pct = Math.min((S.totalCost / S.maxCost) * 100, 100);
+  document.getElementById('cost-total').textContent = `$${S.totalCost.toFixed(4)}`;
+  document.getElementById('token-count').textContent = S.totalTokens.toLocaleString();
+
+  const lbl = document.getElementById('cost-pct-lbl');
+  if (lbl) lbl.textContent = `$${S.totalCost.toFixed(3)} / $${S.maxCost} daily`;
+  const daily = document.getElementById('daily-lbl');
+  if (daily) daily.textContent = `$${S.totalCost.toFixed(3)} / $${S.maxCost}`;
+
+  renderCostMeters();
+}
+
+function renderCostMeters() {
+  const el = document.getElementById('cost-meters');
+  if (!el) return;
+  const pct = Math.min((S.totalCost / S.maxCost) * 100, 100).toFixed(1);
+  const cls = pct > 80 ? 'bad' : pct > 50 ? 'warn' : 'ok';
+  el.innerHTML = `
+    <div class="cost-row"><span class="cost-label">AI Calls</span><span class="cost-val ${cls}">$${S.totalCost.toFixed(4)}</span></div>
+    <div class="prog-bar" style="margin:4px 0"><div class="prog-fill" style="width:${pct}%;background:${pct>80?'var(--red)':pct>50?'var(--yellow)':'var(--green)'}"></div></div>
+    <div class="cost-row" style="margin-top:6px"><span class="cost-label">Tokens used</span><span class="cost-val ok">${S.totalTokens.toLocaleString()}</span></div>
+    <div class="cost-row"><span class="cost-label">Cache hits</span><span class="cost-val ok">${S.cacheHits}</span></div>
+    <div class="cost-row"><span class="cost-label">Est. saved</span><span class="cost-val ok">$${(S.cacheHits * 0.0008).toFixed(4)}</span></div>`;
+
+  const dc = document.getElementById('detailed-costs');
+  if (dc) dc.innerHTML = el.innerHTML;
+
+  const cs = document.getElementById('cache-stats');
+  if (cs) cs.innerHTML = `
+    <div class="cost-row"><span class="cost-label">Hit rate</span><span class="cost-val ok">${S.totalTokens > 0 ? Math.round(S.cacheHits / Math.max(S.totalTokens/100,1) * 100) : 0}%</span></div>
+    <div class="cost-row"><span class="cost-label">Cached items</span><span class="cost-val ok">${Object.keys(S.cache).length}</span></div>
+    <div class="cost-row"><span class="cost-label">Cost saved</span><span class="cost-val ok">$${(S.cacheHits * 0.0008).toFixed(4)}</span></div>`;
+}
+
+function renderRateMeters() {
+  const el = document.getElementById('rate-meters');
+  if (!el) return;
+  const limits = { tiktok:2, instagram:3, youtube:2, twitter:5 };
+  el.innerHTML = Object.entries(limits).map(([p, max]) => {
+    const used = S.rateLimits[p];
+    const pct = (used / max) * 100;
+    return `<div class="cost-row"><span class="cost-label">${p}</span><span class="cost-val ${pct>=100?'bad':pct>60?'warn':'ok'}">${used}/${max}</span></div>
+    <div class="prog-bar" style="margin-bottom:6px"><div class="prog-fill" style="width:${pct}%;background:${pct>=100?'var(--red)':pct>60?'var(--yellow)':'var(--accent)'}"></div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// PROJECTS TABLE
+// ============================================================
+function renderProjects() {
+  const tbody = document.getElementById('projects-tbody');
+  if (!tbody) return;
+  if (!S.projects.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No projects yet. Build your first SaaS!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = S.projects.map(p => `
+    <tr>
+      <td><div style="font-family:var(--title);font-size:13px;font-weight:700">${p.name}</div><div style="font-family:var(--mono);font-size:9px;color:var(--muted)">${p.id}</div></td>
+      <td><span class="pill ${p.status==='live'?'pill-live':p.status==='built'?'pill-build':p.status==='error'?'pill-err':'pill-queue'}">${p.status}</span></td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.phase}</td>
+      <td style="font-family:var(--mono);font-size:11px">${p.users||0}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--green)">$${p.cost||'0.000'}</td>
+      <td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${p.created}</td>
+      <td><button class="btn btn-ghost btn-sm">View</button></td>
+    </tr>`).join('');
+}
+
+// ============================================================
+// CONTENT QUEUE
+// ============================================================
+function renderContentQueue() {
+  const el = document.getElementById('content-list');
+  if (!el) return;
+  if (!S.content.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">Run the Growth Engine to generate content.</div>'; return; }
+  el.innerHTML = S.content.map((c, i) => `
+    <div class="cq-item">
+      <div class="cq-icon" style="background:var(${i%2===0?'--green-dim':'--purple-dim'})">${i%2===0?'🎬':'📸'}</div>
+      <div class="cq-body">
+        <div class="cq-platform">${c.platform||'TikTok'} • ${c.saas} • ${c.angle||'pain'}</div>
+        <div class="cq-title">${c.title||c.hook||'No title'}</div>
+        <div class="cq-stats">Score: ${c.score||'—'}/100 • ${c.approved?'<span style="color:var(--green)">Approved</span>':'Pending'}</div>
+      </div>
+      <div class="cq-acts">
+        ${!c.approved ? `<button class="btn btn-primary btn-sm" onclick="approveContent('${c.id}')">Approve</button>` : '<span style="color:var(--green);font-family:var(--mono);font-size:9px">✓ approved</span>'}
+      </div>
+    </div>`).join('');
+}
+
+// ============================================================
+// OVERVIEW
+// ============================================================
+function updateOverview() {
+  const live = S.projects.filter(p => p.status === 'live').length;
+  document.getElementById('ov-built').textContent = S.projects.length;
+  document.getElementById('ov-live').textContent = live;
+  document.getElementById('ov-users').textContent = S.projects.reduce((a, p) => a + (p.users || 0), 0);
+  document.getElementById('ov-rev').textContent = '₹0';
+}
+
+function renderOverviewApprovals() {
+  const el = document.getElementById('ov-approvals-mini');
+  if (!el) return;
+  const pending = S.approvals.filter(a => a.status === 'pending').slice(0, 3);
+  if (!pending.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">No pending approvals. ✓</div>'; return; }
+  el.innerHTML = pending.map(a => `
+    <div style="background:var(--yellow-dim);border:1px solid rgba(255,211,42,.2);border-radius:7px;padding:10px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div style="font-size:12px;flex:1">${a.title.substring(0,45)}...</div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm" onclick="rejectItem('${a.id}')">✗</button>
+        <button class="btn btn-primary btn-sm" onclick="approveItem('${a.id}')">✓</button>
+      </div>
+    </div>`).join('');
+}
+
+function updateApprovalCount() {
+  const n = S.approvals.filter(a => a.status === 'pending').length;
+  document.getElementById('appr-ct').textContent = n;
+}
+
+// ============================================================
+// ANALYTICS
+// ============================================================
+function renderAnalyticsBars() {
+  const el = document.getElementById('exec-bars');
+  if (!el) return;
+  const data = Array(24).fill(0).map(() => Math.floor(Math.random() * 15));
+  el.innerHTML = data.map((v, i) => {
+    const h = v > 0 ? Math.max(10, (v / 15) * 100) : 4;
+    return `<div class="bar-item ${i===new Date().getHours()?'hi':''}" style="height:${h}%" title="${v} runs at ${i}:00"></div>`;
+  }).join('');
+}
+
+function renderSkillBars() {
+  const el = document.getElementById('skill-bars');
+  if (!el) return;
+  const entries = Object.entries(S.skillRuns).slice(0, 12);
+  if (!entries.length) { el.innerHTML = '<div style="color:var(--muted);font-size:11px;align-self:center">Run skills to see usage</div>'; return; }
+  const max = Math.max(...entries.map(e => e[1]));
+  el.innerHTML = entries.map(([name, tokens]) => {
+    const h = Math.max(8, (tokens / max) * 100);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--muted)">${tokens}</div>
+      <div class="bar-item" style="height:${h}%;width:100%" title="${name}: ${tokens} tokens"></div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+const PAGE_TITLES = {
+  overview:'Factory Overview', build:'Build New SaaS', projects:'Projects',
+  approvals:'Approval Queue', skills:'Skill Library', growth:'Growth Engine',
+  content:'Content Queue', analytics:'Analytics', costs:'Cost Guard',
+  logs:'Execution Logs', settings:'Settings'
+};
+
+function go(page) {
+  document.querySelectorAll('[id^="pg-"]').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('on'));
+  const el = document.getElementById('pg-' + page);
+  if (el) { el.style.display = 'block'; el.className = 'page'; }
+  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+  event?.currentTarget?.classList.add('on');
+
+  if (page === 'skills') renderSkillGrid();
+  if (page === 'projects') renderProjects();
+  if (page === 'approvals') renderApprovals();
+  if (page === 'content') renderContentQueue();
+  if (page === 'analytics') { renderAnalyticsBars(); renderSkillBars(); renderAIInsights(); }
+  if (page === 'costs') { updateCostDisplay(); renderSkillBars(); }
+  if (page === 'growth') { renderRateMeters(); }
+  if (page === 'settings') loadSettings();
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function loadSettings() {
+  document.getElementById('api-key-input').value = S.apiKey;
+  document.getElementById('model-select').value = S.model;
+  document.getElementById('max-tokens').value = S.maxTokens;
+  document.getElementById('s-maxcost').value = S.maxCost;
+}
+
+function saveSettings() {
+  S.apiKey = document.getElementById('api-key-input').value.trim();
+  S.model = document.getElementById('model-select').value;
+  S.maxTokens = parseInt(document.getElementById('max-tokens').value);
+  S.maxCost = parseFloat(document.getElementById('s-maxcost').value);
+  localStorage.setItem('or_key', S.apiKey);
+  localStorage.setItem('or_model', S.model);
+  localStorage.setItem('or_tokens', S.maxTokens);
+  document.getElementById('model-lbl').textContent = S.model;
+  const msg = document.getElementById('settings-msg');
+  msg.style.display = 'block';
+  setTimeout(() => msg.style.display = 'none', 2000);
+  updateAPIBanner();
+}
+
+function updateAPIBanner() {
+  const banner = document.getElementById('api-banner');
+  if (!banner) return;
+  if (S.apiKey && S.apiKey.length > 10) {
+    banner.className = 'api-banner ok';
+    banner.innerHTML = '<span style="font-size:16px">✓</span><div>OpenRouter API key configured. Model: <strong>' + S.model + '</strong></div>';
+  } else {
+    banner.className = 'api-banner';
+    banner.innerHTML = '<span style="font-size:16px">⚠</span><div><strong>OpenRouter API Key required</strong> — go to <span style="color:var(--yellow);cursor:pointer;text-decoration:underline" onclick="go(\'settings\')">Settings →</span></div>';
+  }
+}
+
+// ============================================================
+// KILL SWITCH
+// ============================================================
+function toggleKS() {
+  S.systemOn = !S.systemOn;
+  const btn = document.getElementById('ks-btn');
+  const txt = document.getElementById('ks-txt');
+  const status = document.getElementById('sys-status');
+  if (S.systemOn) {
+    btn.className = 'ks on'; txt.textContent = 'LIVE';
+    status.style.color = 'var(--green)'; status.textContent = 'SYSTEM ONLINE';
+    addLog('ok', 'KillSwitch', 'System resumed');
+  } else {
+    btn.className = 'ks'; txt.textContent = 'HALTED';
+    status.style.color = 'var(--red)'; status.textContent = 'SYSTEM HALTED';
+    addLog('warn', 'KillSwitch', 'System halted by user');
+    if (S.running) stopRun();
+  }
+}
+
+// ============================================================
+// MISC
+// ============================================================
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function renderAIInsights() {
+  const el = document.getElementById('ai-insights');
+  if (!el || !S.apiKey || S.projects.length === 0) return;
+  el.textContent = 'Generating AI insights...';
+  try {
+    const out = await callOR(
+      'You are a SaaS growth analyst. Give 3 short, actionable insights in plain text. Be specific and data-driven.',
+      `Projects: ${S.projects.length}. Total users: ${S.projects.reduce((a,p)=>a+(p.users||0),0)}. Content pieces: ${S.content.length}. Give growth advice.`,
+      'analytics_reader', false
+    );
+    el.innerHTML = out.split('\n').filter(l => l.trim()).map(l => `<div style="padding:4px 0;border-bottom:1px solid var(--border);font-size:12px">${l}</div>`).join('');
+  } catch(e) { el.textContent = 'Add API key in Settings to get AI insights.'; }
+}
+
+function runGrowthCycle() { go('growth'); setTimeout(() => runGrowthAI(), 100); }
+
+function saveState() {
+  localStorage.setItem('projects', JSON.stringify(S.projects));
+  localStorage.setItem('logs', JSON.stringify(S.logs.slice(0, 100)));
+  localStorage.setItem('approvals', JSON.stringify(S.approvals));
+  localStorage.setItem('content', JSON.stringify(S.content));
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Load saved data
+  S.projects = JSON.parse(localStorage.getItem('projects') || '[]');
+  S.logs = JSON.parse(localStorage.getItem('logs') || '[]');
+  S.approvals = JSON.parse(localStorage.getItem('approvals') || '[]');
+  S.content = JSON.parse(localStorage.getItem('content') || '[]');
+
+  updateOverview();
+  updateAPIBanner();
+  updateCostDisplay();
+  renderOverviewApprovals();
+  updateApprovalCount();
+  renderRateMeters();
+  renderAnalyticsBars();
+
+  // Restore logs to live feed
+  S.logs.slice(0, 8).forEach(l => {
+    const el = document.getElementById('live-log');
+    if (!el) return;
+    const clsMap = { ok:'lb-ok', err:'lb-err', warn:'lb-warn', info:'lb-info', cache:'lb-cache' };
+    el.innerHTML += `<div class="log-row"><span class="log-t">${l.t}</span><span class="log-badge ${clsMap[l.level]||'lb-info'}">${l.level.toUpperCase()}</span><span class="log-msg"><strong style="color:var(--muted)">[${l.skill}]</strong> ${l.msg}</span></div>`;
+  });
+
+  const cnt = document.getElementById('live-log-count');
+  if (cnt) cnt.textContent = S.logs.length + ' entries';
+
+  // Close modals on bg click
+  document.querySelectorAll('.modal-wrap').forEach(m => {
+    m.addEventListener('click', e => { if(e.target === m) m.classList.remove('open'); });
+  });
+
+  document.getElementById('model-lbl').textContent = S.model;
+  addLog('info', 'System', 'OpenClaw SaaS Factory v2 initialized');
+}
+
+init();
+</script>
+</body>
+</html>
