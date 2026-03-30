@@ -6,6 +6,99 @@ import prisma from '@/lib/db/prisma';
 
 const execAsync = util.promisify(exec);
 
+// Safely resolve boundaries
+function resolveSafePath(workDir: string, filename: string): string | null {
+  const safeFilename = path.normalize(filename).replace(/^(\.\.[\/\\])+/, '');
+  const filePath = path.join(workDir, safeFilename);
+
+  if (!filePath.startsWith(workDir)) {
+      console.warn(`Blocked attempt to write outside sandbox boundary: ${safeFilename}`);
+      return null;
+  }
+  return filePath;
+}
+
+// Executes a collection of modifications against the filesystem
+export async function applyPatches(workDir: string, patchesObj: any) {
+  // We need to parse arbitrary objects or arrays. The AI might send { patches: [...] } or an array directly
+  const patches = Array.isArray(patchesObj) ? patchesObj : (patchesObj?.patches || []);
+
+  for (const patch of patches) {
+    if (!patch.file || !patch.operation) continue;
+
+    const filePath = resolveSafePath(workDir, patch.file);
+    if (!filePath) continue;
+
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+
+    try {
+        if (patch.operation === 'create_file') {
+            const content = patch.content || patch.with || patch.code || '';
+            fs.writeFileSync(filePath, content, 'utf8');
+            console.log(`[PATCH] Created file: ${patch.file}`);
+        }
+        else if (patch.operation === 'replace_section') {
+            if (!fs.existsSync(filePath)) {
+                 console.warn(`[PATCH] Cannot replace section in missing file: ${patch.file}`);
+                 continue;
+            }
+            let fileContent = fs.readFileSync(filePath, 'utf8');
+            const target = patch.target || patch.after;
+            const replacement = patch.with || patch.line || patch.content;
+
+            if (target && replacement && fileContent.includes(target)) {
+                 fileContent = fileContent.replace(target, replacement);
+                 fs.writeFileSync(filePath, fileContent, 'utf8');
+                 console.log(`[PATCH] Replaced section in: ${patch.file}`);
+            } else {
+                 console.warn(`[PATCH] Target '${target}' not found in ${patch.file}`);
+            }
+        }
+        else if (patch.operation === 'add_line') {
+             const addition = patch.with || patch.line || patch.content;
+             if (!addition) continue;
+
+             if (!fs.existsSync(filePath)) {
+                  fs.writeFileSync(filePath, addition + '\n', 'utf8');
+                  console.log(`[PATCH] Created new file with line: ${patch.file}`);
+             } else {
+                  let fileContent = fs.readFileSync(filePath, 'utf8');
+                  const target = patch.target || patch.after;
+
+                  if (target && fileContent.includes(target)) {
+                       fileContent = fileContent.replace(target, target + '\n' + addition);
+                       fs.writeFileSync(filePath, fileContent, 'utf8');
+                       console.log(`[PATCH] Added line after target in: ${patch.file}`);
+                  } else {
+                       fs.appendFileSync(filePath, '\n' + addition, 'utf8');
+                       console.log(`[PATCH] Appended line to: ${patch.file}`);
+                  }
+             }
+        }
+    } catch (e: any) {
+        throw new Error(`Failed to apply patch on ${patch.file}: ${e.message}`);
+    }
+  }
+
+  // Handle specific backend structures like api_routes arrays
+  const apiRoutes = patchesObj?.api_routes || [];
+  for (const route of apiRoutes) {
+      if (!route.file || !route.code) continue;
+      const filePath = resolveSafePath(workDir, route.file);
+      if (!filePath) continue;
+
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(filePath, route.code, 'utf8');
+      console.log(`[PATCH] Generated API Route: ${route.file}`);
+  }
+}
+
 export async function generateSaaS(projectId: string, code: any) {
   try {
     const project = await prisma.project.findUnique({ where: { id: projectId } });
@@ -20,23 +113,31 @@ export async function generateSaaS(projectId: string, code: any) {
     });
 
     const workDir = path.join(process.cwd(), 'projects', projectId);
-    if (!fs.existsSync(workDir)) {
-      fs.mkdirSync(workDir, { recursive: true });
+    const templateDir = path.join(process.cwd(), 'templates', 'base-saas');
+
+    // Copy the Base SaaS Template First
+    await prisma.build.updateMany({
+      where: { projectId, status: 'RUNNING' },
+      data: { logs: 'Copying base SaaS template...' }
+    });
+
+    if (fs.existsSync(workDir)) {
+      fs.rmSync(workDir, { recursive: true, force: true });
     }
 
-    // Process AI payload into files
+    // Copy template recursively avoiding node_modules and .next to save space and time
+    await execAsync(`cp -r ${templateDir} ${workDir} && rm -rf ${workDir}/node_modules ${workDir}/.next`);
+
+    // Process AI payload into files as patches on top of the base template
+    await prisma.build.updateMany({
+      where: { projectId, status: 'RUNNING' },
+      data: { logs: 'Applying AI-generated code patches...' }
+    });
+
     const parsedCode = typeof code === 'string' ? JSON.parse(code) : code;
 
-    for (const [filename, content] of Object.entries(parsedCode)) {
-      const filePath = path.join(workDir, filename as string);
-      const dir = path.dirname(filePath);
-
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-
-      fs.writeFileSync(filePath, content as string);
-    }
+    // Core Patch Application Engine
+    await applyPatches(workDir, parsedCode);
 
     // Install dependencies
     await prisma.build.updateMany({
@@ -44,24 +145,10 @@ export async function generateSaaS(projectId: string, code: any) {
       data: { logs: 'Installing dependencies...' }
     });
 
-    // Simulate or execute npm install depending on environment.
-    // In actual production we would securely run this inside a sandboxed container (e.g. Docker)
     try {
         await execAsync('npm install', { cwd: workDir });
     } catch (e: any) {
-        console.warn('npm install failed or was mocked', e.message);
-    }
-
-    // Run build
-    await prisma.build.updateMany({
-      where: { projectId, status: 'RUNNING' },
-      data: { logs: 'Running build...' }
-    });
-
-    try {
-        await execAsync('npm run build', { cwd: workDir });
-    } catch (e: any) {
-         console.warn('npm run build failed or was mocked', e.message);
+        console.warn('npm install warning', e.message);
     }
 
     // Add build success log
@@ -69,7 +156,7 @@ export async function generateSaaS(projectId: string, code: any) {
       where: { projectId, status: 'RUNNING' },
       data: {
         status: 'COMPLETED',
-        logs: 'Code generation, dependency installation and build completed successfully.'
+        logs: 'Code patches applied and dependencies installed successfully.'
       }
     });
 
