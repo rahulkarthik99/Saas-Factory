@@ -115,20 +115,27 @@ export async function generateSaaS(projectId: string, code: any) {
     const workDir = path.join(process.cwd(), 'projects', projectId);
     const templateDir = path.join(process.cwd(), 'templates', 'base-saas');
 
-    // Copy the Base SaaS Template First
+    // Step 1: Clone the Base SaaS Template First using local git repository
     await prisma.build.updateMany({
       where: { projectId, status: 'RUNNING' },
-      data: { logs: 'Copying base SaaS template...' }
+      data: { logs: 'Cloning base SaaS template...' }
     });
 
     if (fs.existsSync(workDir)) {
       fs.rmSync(workDir, { recursive: true, force: true });
     }
 
-    // Copy template recursively avoiding node_modules and .next to save space and time
-    await execAsync(`cp -r ${templateDir} ${workDir} && rm -rf ${workDir}/node_modules ${workDir}/.next`);
+    try {
+        // Clone template from local repository
+        await execAsync(`git clone ${templateDir} ${workDir}`);
 
-    // Process AI payload into files as patches on top of the base template
+        // Remove git history to ensure fresh initialization later by github script
+        fs.rmSync(path.join(workDir, '.git'), { recursive: true, force: true });
+    } catch (e: any) {
+        throw new Error(`Failed to clone template: ${e.message}`);
+    }
+
+    // Step 2: Process AI payload into files as patches on top of the base template
     await prisma.build.updateMany({
       where: { projectId, status: 'RUNNING' },
       data: { logs: 'Applying AI-generated code patches...' }
